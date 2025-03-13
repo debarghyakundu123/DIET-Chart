@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import requests
+import random
 
 # Configure Google Gemini AI
 API_KEY = "AIzaSyDM7z8pBmnrkX8e9ycc4CRgWUmJFlgzr6o"
@@ -11,11 +12,13 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 APP_ID = "f9f1895e"
 API_KEY_NUTRI = "c8cdaff4b8d656b4b7f9d0e53405f424"
 
+# Function to calculate BMI
 def calculate_bmi(weight, height):
     height_m = height / 100
     bmi = weight / (height_m ** 2)
     return round(bmi, 2)
 
+# Function to get BMI category
 def get_bmi_category(bmi):
     if bmi < 18.5:
         return "Underweight"
@@ -26,6 +29,7 @@ def get_bmi_category(bmi):
     else:
         return "Obese"
 
+# Function to get nutritional info from Nutritionix API
 def get_nutritional_info(food_item):
     url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
     headers = {"x-app-id": APP_ID, "x-app-key": API_KEY_NUTRI, "Content-Type": "application/json"}
@@ -44,6 +48,7 @@ def get_nutritional_info(food_item):
             }
     return None
 
+# Function to generate diet plan using Gemini API
 def generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input=None):
     prompt = (f"Hi {name}, based on your details:\n"
               f"Age: {age}\nGender: {gender}\nBMI: {bmi}\nDiet: {diet_preference}\n"
@@ -55,12 +60,38 @@ def generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input
     response = model.generate_content(prompt)
     return response.text
 
+# Function to generate exercise and yoga routine based on BMI
+def generate_exercise_yoga_routine(bmi):
+    if bmi < 18.5:
+        return "Focus on building strength with weight training and gentle yoga like Child's Pose, and Warrior I."
+    elif 18.5 <= bmi < 24.9:
+        return "Maintain a balanced routine with moderate cardio like jogging and yoga poses like Downward Dog and Cobra."
+    elif 25 <= bmi < 29.9:
+        return "Incorporate more cardio and strength training. Try yoga poses like Warrior II and Chair Pose for flexibility."
+    else:
+        return "Start with low-impact activities like walking and gentle yoga poses like Cat-Cow and Seated Forward Fold."
+
 # Streamlit App
 st.title("Health & Nutrition Assistant")
-tabs = st.tabs(["Diet Plan ", "Nutritional Info", "BMI Calculator"])
+tabs = st.tabs(["Home", "Diet Plan", "Nutritional Info", "BMI Calculator"])
+
+# Home Page with Motivational Quotes and Welcome
+with tabs[0]:
+    st.header("Welcome to Your Health Journey!")
+    st.subheader("Stay Healthy, Stay Fit!")
+    
+    motivational_quotes = [
+        "The only bad workout is the one that didn’t happen.",
+        "Push yourself, no one else is going to do it for you.",
+        "The body achieves what the mind believes."
+    ]
+    st.write(f"**Today's Motivation**: {random.choice(motivational_quotes)}")
+    
+    st.markdown("Start your journey towards a healthier you. Let's create a customized diet plan and fitness routine together.")
+    st.button("Start Now")
 
 # Diet Plan Generator
-with tabs[0]:
+with tabs[1]:
     st.header("Personalized Diet Plan")
     name = st.text_input("Enter your name:")
     age = st.number_input("Enter your age:", min_value=1, step=1)
@@ -68,7 +99,6 @@ with tabs[0]:
     diet_preference = st.selectbox("Diet preference:", ["Vegetarian", "Non-Vegetarian"])
     additional_input = st.text_area("Any allergies or preferences?")
     
-    # Get weight and height inputs in this section for BMI calculation
     weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1, key="weight_diet_plan")
     height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1, key="height_diet_plan")
     
@@ -79,7 +109,7 @@ with tabs[0]:
             st.write(diet_plan)
 
 # Nutritional Info
-with tabs[1]:
+with tabs[2]:
     st.header("Food Nutritional Info")
     food_item = st.text_input("Enter a food item:")
     if st.button("Get Nutrition Info"):
@@ -94,7 +124,7 @@ with tabs[1]:
                 st.error("No data found!")
 
 # BMI Calculator
-with tabs[2]:
+with tabs[3]:
     st.header("BMI Calculator")
     weight_bmi = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1, key="weight_bmi")
     height_bmi = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1, key="height_bmi")
@@ -104,5 +134,9 @@ with tabs[2]:
             bmi = calculate_bmi(weight_bmi, height_bmi)
             category = get_bmi_category(bmi)
             st.success(f"Your BMI is {bmi} ({category})")
+            
+            # Generate exercise and yoga routine based on BMI
+            exercise_yoga_routine = generate_exercise_yoga_routine(bmi)
+            st.write(f"**Recommended Exercise & Yoga**: {exercise_yoga_routine}")
         else:
             st.error("Please enter valid weight and height.")
