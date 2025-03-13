@@ -61,7 +61,6 @@ def generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input
 
 # Function to generate exercise and yoga routine based on BMI
 def generate_exercise_yoga_routine(bmi, name, age, gender):
-    # Generate the prompt to send to the Gemini model
     prompt = f"""
     Hi {name}, based on your details:
     Age: {age}
@@ -75,27 +74,23 @@ def generate_exercise_yoga_routine(bmi, name, age, gender):
     - Duration for each exercise
     - Specific recommendations based on the BMI (Underweight, Normal, Overweight, Obese)
     """
-    # Get the response from the Gemini model
     response = model.generate_content(prompt)
     return response.text
 
 # Streamlit App
 st.title("Health & Nutrition Assistant")
 
-# Home Page
-if 'started' not in st.session_state:
-    st.session_state.started = False
+# Sidebar for navigation
+menu = ["Home", "Diet Recommendation", "BMI", "Nutritional Info", "Exercise & Yoga Plan"]
+choice = st.sidebar.radio("Select a Section", menu)
 
-if not st.session_state.started:
+if choice == "Home":
     st.header("Welcome to Health & Nutrition Assistant")
     st.write("Get a personalized diet plan, exercise routine, and more!")
-    
-    if st.button("Start"):
-        st.session_state.started = True
-else:
-    # Collect all user information at once
+
+elif choice == "Diet Recommendation":
+    st.header("Diet Recommendation")
     with st.form(key='user_info_form'):
-        st.header("Enter Your Details:")
         name = st.text_input("Enter your name:")
         age = st.number_input("Enter your age:", min_value=1, step=1)
         gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
@@ -104,43 +99,59 @@ else:
         weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1)
         height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1)
         
-        submit_button = st.form_submit_button(label="Generate Health Plan")
+        submit_button = st.form_submit_button(label="Generate Diet Plan")
 
     if submit_button:
         if name and age and diet_preference and weight and height:
-            # Calculate BMI and other details
             bmi = calculate_bmi(weight, height)
-            bmi_category = get_bmi_category(bmi)
-            
-            # Generate outputs
             diet_plan = generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input)
-            exercise_yoga_routine = generate_exercise_yoga_routine(bmi, name, age, gender)
-            
-            # Show the navigation options after entering details
-            page_selection = st.radio("Choose a section to view:", 
-                                      ["Diet Plan", "Nutritional Info", "BMI Calculator", "Exercise & Yoga Routine"])
-
-            if page_selection == "Diet Plan":
-                st.write(f"**Personalized Diet Plan:**\n{diet_plan}")
-
-            elif page_selection == "Nutritional Info":
-                food_item = st.text_input("Enter a food item to get nutritional information:")
-                if food_item:
-                    nutrition = get_nutritional_info(food_item)
-                    if nutrition:
-                        st.write(f"**Nutritional Information for {food_item}:**")
-                        st.write(f"Calories: {nutrition['calories']} kcal")
-                        st.write(f"Protein: {nutrition['protein']} g")
-                        st.write(f"Carbohydrates: {nutrition['carbohydrates']} g")
-                        st.write(f"Fat: {nutrition['fat']} g")
-                    else:
-                        st.write("No nutritional information found.")
-
-            elif page_selection == "BMI Calculator":
-                st.write(f"**Your BMI is {bmi} ({bmi_category})**")
-
-            elif page_selection == "Exercise & Yoga Routine":
-                st.write(f"**Exercise & Yoga Routine:**\n{exercise_yoga_routine}")
-
+            st.write(f"**Personalized Diet Plan:**\n{diet_plan}")
         else:
             st.error("Please fill in all the details to generate the health plan.")
+
+elif choice == "BMI":
+    st.header("BMI Calculator")
+    with st.form(key='bmi_form'):
+        weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1)
+        height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1)
+        submit_button = st.form_submit_button(label="Calculate BMI")
+
+    if submit_button:
+        if weight and height:
+            bmi = calculate_bmi(weight, height)
+            bmi_category = get_bmi_category(bmi)
+            st.write(f"**Your BMI is {bmi} ({bmi_category})**")
+        else:
+            st.error("Please fill in all the details to calculate BMI.")
+
+elif choice == "Nutritional Info":
+    st.header("Nutritional Information")
+    food_item = st.text_input("Enter a food item to get nutritional information:")
+    if food_item:
+        nutrition = get_nutritional_info(food_item)
+        if nutrition:
+            st.write(f"**Nutritional Information for {food_item}:**")
+            st.write(f"Calories: {nutrition['calories']} kcal")
+            st.write(f"Protein: {nutrition['protein']} g")
+            st.write(f"Carbohydrates: {nutrition['carbohydrates']} g")
+            st.write(f"Fat: {nutrition['fat']} g")
+        else:
+            st.write("No nutritional information found.")
+
+elif choice == "Exercise & Yoga Plan":
+    st.header("Exercise & Yoga Routine")
+    with st.form(key='exercise_yoga_form'):
+        name = st.text_input("Enter your name:")
+        age = st.number_input("Enter your age:", min_value=1, step=1)
+        gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
+        weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1)
+        height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1)
+        submit_button = st.form_submit_button(label="Generate Exercise & Yoga Plan")
+
+    if submit_button:
+        if name and age and weight and height:
+            bmi = calculate_bmi(weight, height)
+            exercise_yoga_routine = generate_exercise_yoga_routine(bmi, name, age, gender)
+            st.write(f"**Exercise & Yoga Routine:**\n{exercise_yoga_routine}")
+        else:
+            st.error("Please fill in all the details to generate the exercise and yoga routine.")
