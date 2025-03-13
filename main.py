@@ -113,11 +113,11 @@ with tabs[0]:
 # Diet Plan Generator
 with tabs[1]:
     st.header("Personalized Diet Plan")
-    name = st.text_input("Enter your name:")
-    age = st.number_input("Enter your age:", min_value=1, step=1)
-    gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
-    diet_preference = st.selectbox("Diet preference:", ["Vegetarian", "Non-Vegetarian"])
-    additional_input = st.text_area("Any allergies or preferences?")
+    name = st.text_input("Enter your name:", key="name_diet_plan")
+    age = st.number_input("Enter your age:", min_value=1, step=1, key="age_diet_plan")
+    gender = st.selectbox("Select gender:", ["Male", "Female", "Other"], key="gender_diet_plan")
+    diet_preference = st.selectbox("Diet preference:", ["Vegetarian", "Non-Vegetarian"], key="diet_preference_diet_plan")
+    additional_input = st.text_area("Any allergies or preferences?", key="additional_input_diet_plan")
     
     weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1, key="weight_diet_plan")
     height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1, key="height_diet_plan")
@@ -131,7 +131,7 @@ with tabs[1]:
 # Nutritional Info
 with tabs[2]:
     st.header("Food Nutritional Info")
-    food_item = st.text_input("Enter a food item:")
+    food_item = st.text_input("Enter a food item:", key="food_item_nutritional_info")
     if st.button("Get Nutrition Info"):
         if food_item:
             nutrition = get_nutritional_info(food_item)
@@ -164,9 +164,9 @@ with tabs[3]:
 # Personalized Exercise & Yoga Routine
 with tabs[4]:
     st.header("Personalized Exercise & Yoga Routine")
-    name = st.text_input("Enter your name:")
-    age = st.number_input("Enter your age:", min_value=1, step=1)
-    gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
+    name = st.text_input("Enter your name:", key="name_routine")
+    age = st.number_input("Enter your age:", min_value=1, step=1, key="age_routine")
+    gender = st.selectbox("Select gender:", ["Male", "Female", "Other"], key="gender_routine")
     weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1, key="weight_routine")
     height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1, key="height_routine")
 
