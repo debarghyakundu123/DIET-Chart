@@ -61,15 +61,35 @@ def generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input
     return response.text
 
 # Function to generate exercise and yoga routine based on BMI
-def generate_exercise_yoga_routine(bmi):
-    if bmi < 18.5:
-        return "Focus on building strength with weight training and gentle yoga like Child's Pose, and Warrior I."
-    elif 18.5 <= bmi < 24.9:
-        return "Maintain a balanced routine with moderate cardio like jogging and yoga poses like Downward Dog and Cobra."
-    elif 25 <= bmi < 29.9:
-        return "Incorporate more cardio and strength training. Try yoga poses like Warrior II and Chair Pose for flexibility."
-    else:
-        return "Start with low-impact activities like walking and gentle yoga poses like Cat-Cow and Seated Forward Fold."
+def generate_exercise_yoga_routine(bmi, name, age, gender):
+    # Generate the prompt to send to the Gemini model
+    prompt = f"""
+    Hi {name}, based on your details:
+    Age: {age}
+    Gender: {gender}
+    BMI: {bmi}
+    Please generate a complete daily workout routine and yoga practice suitable for a person with the given BMI. 
+    The routine should include:
+    - Cardiovascular exercises
+    - Strength training exercises
+    - Yoga poses
+    - Duration for each exercise
+    - Specific recommendations based on the BMI (Underweight, Normal, Overweight, Obese)
+    """
+
+    # Get the response from the Gemini model
+    response = model.generate_content(prompt)
+    
+    return response.text
+
+# Example function for generating workout and yoga routine based on BMI
+def get_routine_for_user(name, age, gender, weight, height):
+    bmi = calculate_bmi(weight, height)  # Calculate BMI
+    
+    # Get exercise and yoga routine from Gemini
+    routine = generate_exercise_yoga_routine(bmi, name, age, gender)
+    
+    return routine
 
 # Streamlit App
 st.title("Health & Nutrition Assistant")
@@ -140,3 +160,17 @@ with tabs[3]:
             st.write(f"**Recommended Exercise & Yoga**: {exercise_yoga_routine}")
         else:
             st.error("Please enter valid weight and height.")
+
+with tabs[4]:
+    st.header("Personalized Exercise & Yoga Routine")
+    name = st.text_input("Enter your name:")
+    age = st.number_input("Enter your age:", min_value=1, step=1)
+    gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
+    weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1, key="weight_routine")
+    height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1, key="height_routine")
+
+    if st.button("Generate Exercise & Yoga Routine"):
+        if name and age and weight and height:
+            routine = get_routine_for_user(name, age, gender, weight, height)
+            st.write(routine)
+
