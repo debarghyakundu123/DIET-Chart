@@ -171,6 +171,7 @@ with tabs[4]:
 
     if st.button("Generate Exercise & Yoga Routine"):
         if name and age and weight and height:
-            routine = get_routine_for_user(name, age, gender, weight, height)
+            bmi = calculate_bmi(weight, height)  # Calculate BMI here
+            # Pass the correct arguments to the function
+            routine = generate_exercise_yoga_routine(bmi, name, age, gender)
             st.write(routine)
-
