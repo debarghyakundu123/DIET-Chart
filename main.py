@@ -12,83 +12,103 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 APP_ID = "f9f1895e"
 API_KEY_NUTRI = "c8cdaff4b8d656b4b7f9d0e53405f424"
 
-# Function for BMI calculation
+# Function to calculate BMI
 def calculate_bmi(weight, height):
-    height_in_m = height / 100  # Convert height to meters
-    bmi = weight / (height_in_m ** 2)
+    height_m = height / 100
+    bmi = weight / (height_m ** 2)
     return round(bmi, 2)
 
-# Function to generate diet plan based on BMI and preferences
-def generate_diet_plan(bmi, diet_preference, name, age, gender, allergies):
+# Function to get BMI category
+def get_bmi_category(bmi):
     if bmi < 18.5:
-        return f"Hello {name}, based on your BMI, we recommend a high-calorie diet. Since you prefer a {diet_preference} diet, here are some recommendations.\n\nAllergy info: {allergies}"
+        return "Underweight"
     elif 18.5 <= bmi < 24.9:
-        return f"Hello {name}, your BMI is in the normal range. Maintain a balanced diet with a focus on protein and fiber. Since you prefer a {diet_preference} diet, here are some recommendations.\n\nAllergy info: {allergies}"
+        return "Normal weight"
+    elif 25 <= bmi < 29.9:
+        return "Overweight"
     else:
-        return f"Hello {name}, based on your BMI, we recommend a low-calorie diet. Since you prefer a {diet_preference} diet, here are some recommendations.\n\nAllergy info: {allergies}"
+        return "Obese"
+
+# Function to get nutritional info from Nutritionix API
+def get_nutritional_info(food_item):
+    url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
+    headers = {"x-app-id": APP_ID, "x-app-key": API_KEY_NUTRI, "Content-Type": "application/json"}
+    body = {"query": food_item, "timezone": "US/Eastern"}
+    
+    response = requests.post(url, json=body, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        if data['foods']:
+            food = data['foods'][0]
+            return {
+                "calories": food.get('nf_calories'),
+                "protein": food.get('nf_protein'),
+                "carbohydrates": food.get('nf_total_carbohydrate'),
+                "fat": food.get('nf_total_fat')
+            }
+    return None
+
+# Function to generate diet plan using Gemini API
+def generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input=None):
+    prompt = (f"Hi {name}, based on your details:\n"
+              f"Age: {age}\nGender: {gender}\nBMI: {bmi}\nDiet: {diet_preference}\n"
+              "Location: India\n"
+              "Provide a balanced diet plan with affordable Indian foods and recipes.")
+    if additional_input:
+        prompt += f"Additional Preferences: {additional_input}\n"
+    
+    response = model.generate_content(prompt)
+    return response.text
 
 # Function to generate exercise and yoga routine based on BMI
-def generate_exercise_yoga_routine(bmi):
-    if bmi < 18.5:
-        return "We recommend strength training exercises and yoga poses focused on building muscle mass."
-    elif 18.5 <= bmi < 24.9:
-        return "We recommend a combination of cardio, strength training, and yoga for overall fitness."
-    else:
-        return "We recommend light cardio exercises and yoga poses focused on flexibility and stress relief."
+def generate_exercise_yoga_routine(bmi, name, age, gender):
+    # Generate the prompt to send to the Gemini model
+    prompt = f"""
+    Hi {name}, based on your details:
+    Age: {age}
+    Gender: {gender}
+    BMI: {bmi}
+    Please generate a complete daily workout routine and yoga practice suitable for a person with the given BMI. 
+    The routine should include:
+    - Cardiovascular exercises
+    - Strength training exercises
+    - Yoga poses
+    - Duration for each exercise
+    - Specific recommendations based on the BMI (Underweight, Normal, Overweight, Obese)
+    """
+    # Get the response from the Gemini model
+    response = model.generate_content(prompt)
+    return response.text
 
-# Layout with tabs
-tabs = st.tabs(["Home", "Diet Plan", "Nutritional Info", "BMI Calculator", "Exercise & Yoga Routine"])
+# Streamlit App
+st.title("Health & Nutrition Assistant")
 
-# Collecting personal details once
-with tabs[0]:
-    st.header("Welcome to Your Health Journey!")
-    st.subheader("Stay Healthy, Stay Fit!")
-    
-    # Collecting user data
+# Collect all user information at once
+with st.form(key='user_info_form'):
+    st.header("Enter Your Details:")
     name = st.text_input("Enter your name:")
     age = st.number_input("Enter your age:", min_value=1, step=1)
     gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
     diet_preference = st.selectbox("Diet preference:", ["Vegetarian", "Non-Vegetarian"])
-    allergies = st.text_area("Any allergies or preferences?")
-    
+    additional_input = st.text_area("Any allergies or preferences?")
     weight = st.number_input("Enter your weight (kg):", min_value=1.0, step=0.1)
     height = st.number_input("Enter your height (cm):", min_value=50.0, step=0.1)
     
-    st.button("Submit Details")
+    submit_button = st.form_submit_button(label="Generate Health Plan")
 
-# Use the entered data for other sections
-if name and age and gender and diet_preference and weight and height:
-    # Diet Plan Section
-    with tabs[1]:
-        st.header("Personalized Diet Plan")
-        bmi = calculate_bmi(weight, height)
-        diet_plan = generate_diet_plan(bmi, diet_preference, name, age, gender, allergies)
-        st.write(diet_plan)
-
-    # Nutritional Info Section
-    with tabs[2]:
-        st.header("Food Nutritional Info")
-        food_item = st.text_input("Enter a food item:")
-        if st.button("Get Nutrition Info"):
-            if food_item:
-                # Example: Dummy data for nutritional info
-                nutrition = {"calories": 200, "protein": 10, "carbohydrates": 30, "fat": 5}
-                st.write(f"Calories: {nutrition['calories']} kcal")
-                st.write(f"Protein: {nutrition['protein']} g")
-                st.write(f"Carbs: {nutrition['carbohydrates']} g")
-                st.write(f"Fat: {nutrition['fat']} g")
-            else:
-                st.error("Please enter a food item.")
-
-    # BMI Calculator Section
-    with tabs[3]:
-        st.header("BMI Calculator")
-        bmi = calculate_bmi(weight, height)
-        category = "Normal" if 18.5 <= bmi < 24.9 else "Underweight" if bmi < 18.5 else "Overweight"
-        st.success(f"Your BMI is {bmi} ({category})")
-
-    # Exercise & Yoga Routine Section
-    with tabs[4]:
-        st.header("Personalized Exercise & Yoga Routine")
-        routine = generate_exercise_yoga_routine(bmi)
-        st.write(f"**Recommended Exercise & Yoga**: {routine}")
+if submit_button:
+    if name and age and diet_preference and weight and height:
+        # Calculate BMI and other details
+        bmi = calculate_bmi(weight, height)  
+        bmi_category = get_bmi_category(bmi)
+        
+        # Generate outputs
+        diet_plan = generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input)
+        exercise_yoga_routine = generate_exercise_yoga_routine(bmi, name, age, gender)
+        
+        # Display the results
+        st.write(f"**Your BMI is {bmi} ({bmi_category})**")
+        st.write(f"**Personalized Diet Plan:**\n{diet_plan}")
+        st.write(f"**Exercise & Yoga Routine:**\n{exercise_yoga_routine}")
+    else:
+        st.error("Please fill in all the details to generate the health plan.")
