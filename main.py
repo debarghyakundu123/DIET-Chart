@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import requests
-import random
 
 # Configure Google Gemini AI
 API_KEY = "AIzaSyDM7z8pBmnrkX8e9ycc4CRgWUmJFlgzr6o"
@@ -106,9 +105,34 @@ if submit_button:
         diet_plan = generate_diet_plan(bmi, diet_preference, name, age, gender, additional_input)
         exercise_yoga_routine = generate_exercise_yoga_routine(bmi, name, age, gender)
         
-        # Display the results
-        st.write(f"**Your BMI is {bmi} ({bmi_category})**")
-        st.write(f"**Personalized Diet Plan:**\n{diet_plan}")
-        st.write(f"**Exercise & Yoga Routine:**\n{exercise_yoga_routine}")
+        # Show tabs for navigation
+        tab_selection = st.radio("Choose a section to view:", ["Home", "Diet Plan", "Nutritional Info", "BMI Calculator", "Exercise & Yoga Routine"])
+
+        if tab_selection == "Home":
+            st.write(f"Welcome, {name}! Here are your health details:")
+            st.write(f"Age: {age}, Gender: {gender}, BMI: {bmi} ({bmi_category})")
+
+        elif tab_selection == "Diet Plan":
+            st.write(f"**Personalized Diet Plan:**\n{diet_plan}")
+
+        elif tab_selection == "Nutritional Info":
+            food_item = st.text_input("Enter a food item to get nutritional information:")
+            if food_item:
+                nutrition = get_nutritional_info(food_item)
+                if nutrition:
+                    st.write(f"**Nutritional Information for {food_item}:**")
+                    st.write(f"Calories: {nutrition['calories']} kcal")
+                    st.write(f"Protein: {nutrition['protein']} g")
+                    st.write(f"Carbohydrates: {nutrition['carbohydrates']} g")
+                    st.write(f"Fat: {nutrition['fat']} g")
+                else:
+                    st.write("No nutritional information found.")
+
+        elif tab_selection == "BMI Calculator":
+            st.write(f"**Your BMI is {bmi} ({bmi_category})**")
+
+        elif tab_selection == "Exercise & Yoga Routine":
+            st.write(f"**Exercise & Yoga Routine:**\n{exercise_yoga_routine}")
+
     else:
         st.error("Please fill in all the details to generate the health plan.")
