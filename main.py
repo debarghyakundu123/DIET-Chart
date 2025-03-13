@@ -93,7 +93,7 @@ def get_routine_for_user(name, age, gender, weight, height):
 
 # Streamlit App
 st.title("Health & Nutrition Assistant")
-tabs = st.tabs(["Home", "Diet Plan", "Nutritional Info", "BMI Calculator"])
+tabs = st.tabs(["Home", "Diet Plan", "Nutritional Info", "BMI Calculator", "Exercise & Yoga Routine"])
 
 # Home Page with Motivational Quotes and Welcome
 with tabs[0]:
@@ -161,6 +161,7 @@ with tabs[3]:
         else:
             st.error("Please enter valid weight and height.")
 
+# Personalized Exercise & Yoga Routine
 with tabs[4]:
     st.header("Personalized Exercise & Yoga Routine")
     name = st.text_input("Enter your name:")
